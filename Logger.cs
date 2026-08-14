@@ -9,12 +9,12 @@ public class Logger
 
     private long startTime;
 
-    public Logger()
+    public Logger(string logFileLoc = ".")
     {
         startTime = DateTime.Now.Ticks;
         
         var now = DateTime.Now;
-        logFilePath = $"./{now.Day}-{now.Month}-{now.Year}_{now:HH-MM-ss}";
+        logFilePath = $"{logFileLoc}/{now.Day}-{now.Month}-{now.Year}_{now:HH-MM-ss}";
 
         Log = File.CreateText(logFilePath + ".log");
         Error = File.CreateText(logFilePath + ".error.log");

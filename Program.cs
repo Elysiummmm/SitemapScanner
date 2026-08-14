@@ -4,8 +4,11 @@ class Program
 {
     public static async Task Main(string[] args)
     {
-        Logger logger = new();
-
+        Logger logger;
+        
+        if (args.Length < 2) logger = new Logger();
+        else logger = new Logger(args[0]);
+        
         if (args.Length == 0)
         {
             logger.WriteError("No arguments provided!");
