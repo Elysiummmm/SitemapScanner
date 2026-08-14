@@ -6,6 +6,7 @@ namespace SitemapScanner;
 public class SitemapScanner
 {
     private HttpClient httpClient { get; init; }
+    private ReportData report { get; init; }
     
     public Logger Logger { get; init; }
     public string SitemapUrl { get; init; }
@@ -16,6 +17,7 @@ public class SitemapScanner
         SitemapUrl = sitemapUrl;
 
         httpClient = new HttpClient();
+        report = new ReportData();
     }
 
     public async Task Scan()
@@ -25,6 +27,7 @@ public class SitemapScanner
 
         if (!response.IsSuccessStatusCode) return;
 
+        report.SitemapsChecked.Add(SitemapUrl);
         if (content.Contains("sitemapindex"))
         {
             Logger.WriteLog("Found sitemap index");
@@ -40,6 +43,9 @@ public class SitemapScanner
             Logger.WriteError($"{SitemapUrl} doesn't contain a valid sitemap!");
             return;
         }
+        
+        Logger.WriteLog("Scan complete, creating report file");
+        Logger.GenerateReport(report);
     }
 
     private async Task<HttpResponseMessage> GetSitemap(string url)
@@ -74,6 +80,7 @@ public class SitemapScanner
                         var sitemap = await GetSitemap(sitemapUrl);
                         if (!sitemap.IsSuccessStatusCode) continue;
                         
+                        report.SitemapsChecked.Add(sitemapUrl);
                         await ScanSitemap(await sitemap.Content.ReadAsStreamAsync());
                     }
 
@@ -111,6 +118,8 @@ public class SitemapScanner
 
     public async Task CheckSite(string siteUrl)
     {
+        report.UrlsChecked++;
+        
         HttpResponseMessage response;
         try
         {
@@ -130,11 +139,15 @@ public class SitemapScanner
             {
                 var newUrl = response.Headers.Location?.ToString();
                 if (newUrl == null) return;
-                
+
                 Logger.WriteLog($"{siteUrl} redirects to {newUrl}");
                 await CheckSite(siteUrl);
             }
-            else Logger.WriteError($"Site {siteUrl} is broken, got response code {response.StatusCode}");
+            else
+            {
+                report.BrokenUrls.Add(siteUrl);
+                Logger.WriteError($"Site {siteUrl} is broken, got response code {response.StatusCode}");
+            }
         }
     }
 }
