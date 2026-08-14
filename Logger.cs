@@ -44,6 +44,6 @@ public class Logger
     private string GetTimestamp()
     {
         var time = (double)(DateTime.Now.Ticks - startTime) / TimeSpan.TicksPerSecond;
-        return $"[{time}] ";
+        return $"[{time,9}] ";
     }
 }
