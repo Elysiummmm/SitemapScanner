@@ -1,9 +1,9 @@
-﻿namespace SitemapScanner;
+namespace SitemapScanner;
 
 class Program
 {
-    static void Main(string[] args)
+    public static void Main(string[] args)
     {
-        Console.WriteLine("Hello, World!");
+        SitemapScanner sitemapScanner = new(args[0]);
     }
 }
