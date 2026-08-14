@@ -9,5 +9,8 @@ public class SitemapScanner
     {
         Logger = new Logger();
         SitemapUrl = sitemapUrl;
+        
+        Logger.WriteLog("hi!!!");
+        Logger.WriteError("hi :(");
     }
 }
