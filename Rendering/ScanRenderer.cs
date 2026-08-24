@@ -96,10 +96,7 @@ public class ScanRenderer : TerminalScreen
         
         Console.SetCursorPosition(0, 1);
 
-        var infoText = "Scanning for pages to check...";
-        var paddingL = (Console.WindowWidth - infoText.Length) / 2;
-        var paddingR = Console.WindowWidth - infoText.Length - paddingL;
-        
-        Console.Write(new string(' ', paddingL) + infoText + new string(' ', paddingR));
+        var infoText = CenteredText("Scanning for pages to check...");
+        Console.Write(infoText);
     }
 }

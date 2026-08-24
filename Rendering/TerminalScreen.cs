@@ -3,9 +3,12 @@ namespace SitemapScanner.Rendering;
 public abstract class TerminalScreen
 {
     protected bool Running = false;
+    protected virtual int RenderDelay => 200;
 
     public async Task Start()
     {
+        await BeforeStart();
+        
         Running = true;
         Console.CursorVisible = false;
 
@@ -13,7 +16,7 @@ public abstract class TerminalScreen
         {
             Console.SetCursorPosition(0, 0);
             Render();
-            await Task.Delay(200);
+            await Task.Delay(RenderDelay);
         }
         
         await OnFinished();
@@ -21,6 +24,16 @@ public abstract class TerminalScreen
         Console.CursorVisible = true;
     }
 
+    protected static string CenteredText(string text, int width = -1)
+    {
+        if (width == -1) width = Console.WindowWidth;
+        var paddingL = (width - text.Length) / 2;
+        var paddingR = width - text.Length - paddingL;
+
+        return new string(' ', paddingL) + text + new string(' ', paddingR);
+    }
+    
     protected virtual async Task OnFinished() { }
+    protected virtual async Task BeforeStart() { }
     protected abstract void Render();
 }
