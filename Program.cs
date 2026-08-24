@@ -1,3 +1,5 @@
+using SitemapScanner.Rendering;
+
 namespace SitemapScanner;
 
 class Program

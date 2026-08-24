@@ -1,46 +1,35 @@
 using System.Net;
 using System.Text;
 
-namespace SitemapScanner;
+namespace SitemapScanner.Rendering;
 
-public class ScanRenderer
+public class ScanRenderer : TerminalScreen
 {
-    private bool running = false;
-    
     private SitemapScanner Scanner { get; init; }
-    
     public ScanRenderer(SitemapScanner sitemapScanner)
     {
         Scanner = sitemapScanner;
         Scanner.OnFinished += Stop;
     }
 
-    public async Task Start()
-    {
-        running = true;
-        Console.CursorVisible = false;
-        
-        while (running)
-        {
-            Render();
-            await Task.Delay(200);
-        }
-    }
-
     private void Stop()
     {
-        running = false;
+        Running = false;
         Render();
     }
 
-    private void Render()
+    protected override void Render()
     {
-        Console.SetCursorPosition(0, 0);
-        
         StatusBar();
         InProgressTable();
         
         Console.ResetColor();
+    }
+
+    protected override async Task OnFinished()
+    {
+        SummaryTable table = new(Scanner);
+        await table.Start();
     }
 
     private void StatusBar()
