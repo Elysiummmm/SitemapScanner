@@ -18,6 +18,7 @@ public class SitemapScanner
 
     public List<string> SitesToCheck { get; private set; }
     public List<(string url, HttpStatusCode status)> SitesChecked { get; private set; }
+    public bool IsChecking { get; private set; } = false;
     
     public SitemapScanner(Logger? logger = null)
     {
@@ -59,6 +60,7 @@ public class SitemapScanner
             return;
         }
 
+        IsChecking = true;
         foreach (var site in SitesToCheck)
         {
             await CheckSite(site);

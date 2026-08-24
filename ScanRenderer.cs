@@ -102,5 +102,15 @@ public class ScanRenderer
             
             Console.Write(rowText.ToString());
         }
+
+        if (Scanner.IsChecking) return;
+        
+        Console.SetCursorPosition(0, 1);
+
+        var infoText = "Scanning for pages to check...";
+        var paddingL = (Console.WindowWidth - infoText.Length) / 2;
+        var paddingR = Console.WindowWidth - infoText.Length - paddingL;
+        
+        Console.Write(new string(' ', paddingL) + infoText + new string(' ', paddingR));
     }
 }
