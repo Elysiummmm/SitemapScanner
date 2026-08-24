@@ -1,4 +1,5 @@
 using System.Net;
+using System.Text;
 
 namespace SitemapScanner.Rendering;
 
@@ -14,6 +15,7 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
     ]; 
     
     private SitemapScanner Scanner { get; init; } = sitemapScanner;
+    private List<(string url, HttpStatusCode code)> BrokenLinks { get; set; } = [];
     private int BrokenLinkLines { get; set; } = 0;
     private int BrokenLinkStartLine { get; set; } = 0;
     private int BrokenLinkLineOffset { get; set; } = 0;
@@ -30,9 +32,11 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
                 break;
             case ConsoleKey.UpArrow:
             case ConsoleKey.PageUp:
+                if (BrokenLinkLineOffset > 0) BrokenLinkLineOffset--;
                 break;
             case ConsoleKey.DownArrow:
             case ConsoleKey.PageDown:
+                if (BrokenLinkLineOffset < BrokenLinks.Count - 1) BrokenLinkLineOffset++;
                 break;
             case ConsoleKey.E:
                 break;
@@ -48,6 +52,13 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
 
         BrokenLinkLines = Console.WindowHeight - Console.CursorTop - 2;
         BrokenLinkStartLine = Console.CursorTop + 1;
+        BrokenLinks = Scanner.SitesChecked.FindAll(s => s.status != HttpStatusCode.OK);
+    }
+
+    protected override Task OnFinished()
+    {
+        Console.SetCursorPosition(0, Console.WindowHeight);
+        return Task.CompletedTask;
     }
 
     private void Header()
@@ -94,17 +105,47 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
 
     private void BrokenLinkList()
     {
-        Console.ResetColor();
-        Console.SetCursorPosition(0, BrokenLinkStartLine);
-        
         Console.BackgroundColor = ConsoleColor.White;
-        Console.Write(new string('\u2501', Console.WindowWidth));
-        Console.SetCursorPosition(0, BrokenLinkStartLine + BrokenLinkLines);
-        Console.Write(new string('\u2501', Console.WindowWidth));
+        Console.ForegroundColor = ConsoleColor.Black;
         
-        for (var i = 0; i < BrokenLinkLines; i++)
+        Console.SetCursorPosition(0, BrokenLinkStartLine);
+        Console.Write(CenteredText("Broken Links"));
+        
+        Console.SetCursorPosition(0, BrokenLinkStartLine + BrokenLinkLines - 1);
+        Console.Write(new string(' ', Console.WindowWidth));
+        
+        Console.ResetColor();
+        
+        var statusCharacters = 6;
+        var urlCharacters = Console.WindowWidth - statusCharacters;
+        
+        for (var row = 0; row < BrokenLinkLines; row++)
         {
+            var rowText = new StringBuilder();
             
+            try
+            {
+                var rowData = Scanner.SitesChecked[row + BrokenLinkLineOffset];
+                
+                var urlText = rowData.url.PadRight(urlCharacters, ' ');
+                if (urlText.Length > urlCharacters) urlText = "..." + urlText[3..(urlCharacters - 3)];
+
+                var statusText = $"{(int)rowData.status} ";
+                statusText += Enum.GetName(rowData.status) ?? "???";
+                statusText = statusText.PadLeft(statusCharacters, ' ');
+
+                rowText.Append(urlText);
+                rowText.Append(statusText);
+            }
+            catch (Exception)
+            {
+                rowText = new StringBuilder();
+                rowText.Append(new string(' ', Console.WindowWidth));
+            }
         }
+
+        if (BrokenLinks.Count > 0) return;
+        Console.SetCursorPosition(0, BrokenLinkStartLine + (BrokenLinkLines - 1) / 2);
+        Console.Write(CenteredText("No broken links found!"));
     }
 }
