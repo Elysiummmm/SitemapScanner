@@ -66,7 +66,6 @@ public class ScanRenderer
 
     private void InProgressTable()
     {
-        Console.SetCursorPosition(0, 1);
         Console.ResetColor();
         Console.ForegroundColor = ConsoleColor.White;
         
@@ -76,6 +75,7 @@ public class ScanRenderer
 
         for (var row = 0; row < tableRows; row++)
         {
+            Console.SetCursorPosition(0, row + 1);
             var rowText = new StringBuilder();
 
             try
@@ -100,7 +100,7 @@ public class ScanRenderer
                 rowText.Append(new string(' ', Console.WindowWidth));
             }
             
-            Console.WriteLine(rowText.ToString());
+            Console.Write(rowText.ToString());
         }
     }
 }
