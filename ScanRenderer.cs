@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 
 namespace SitemapScanner;
@@ -17,11 +18,12 @@ public class ScanRenderer
     public async Task Start()
     {
         running = true;
+        Console.CursorVisible = false;
         
         while (running)
         {
             Render();
-            await Task.Delay(100);
+            await Task.Delay(200);
         }
     }
 
@@ -33,8 +35,12 @@ public class ScanRenderer
 
     private void Render()
     {
-        Console.Clear();
+        Console.SetCursorPosition(0, 0);
+        
         StatusBar();
+        InProgressTable();
+        
+        Console.ResetColor();
     }
 
     private void StatusBar()
@@ -49,14 +55,52 @@ public class ScanRenderer
         var urlText = Scanner.SitemapUrl.PadRight(urlCharacters, ' ');
         if (urlText.Length > urlCharacters) urlText = "..." + urlText[3..(urlCharacters - 3)];
 
-        var percentage = (double)Scanner.SitesChecked.Count / Scanner.SitesToCheck.Count * 100;
-        var countText = $"{percentage:F1}% ({Scanner.SitesChecked.Count} / {Scanner.SitesToCheck.Count})";
+        var countText = $"{Scanner.SitesChecked.Count} / {Scanner.SitesToCheck.Count}";
         countText = countText.PadLeft(countCharacters, ' ');
         
         statusBar.Append(urlText);
         statusBar.Append(countText);
         
-        Console.WriteLine(statusBar.ToString());
+        Console.Write(statusBar.ToString());
+    }
+
+    private void InProgressTable()
+    {
+        Console.SetCursorPosition(0, 1);
         Console.ResetColor();
+        Console.ForegroundColor = ConsoleColor.White;
+        
+        var statusCharacters = 6;
+        var urlCharacters = Console.WindowWidth - statusCharacters;
+        var tableRows = Console.WindowHeight - 1;
+
+        for (var row = 0; row < tableRows; row++)
+        {
+            var rowText = new StringBuilder();
+
+            try
+            {
+                var rowData = Scanner.SitesChecked[^row];
+                
+                Console.ForegroundColor = rowData.status != HttpStatusCode.OK ? ConsoleColor.Red : ConsoleColor.White;
+                
+                var urlText = rowData.url.PadRight(urlCharacters, ' ');
+                if (urlText.Length > urlCharacters) urlText = "..." + urlText[3..(urlCharacters - 3)];
+
+                var statusText = $"{(int)rowData.status} ";
+                statusText += Enum.GetName(rowData.status) ?? "???";
+                statusText = statusText.PadLeft(statusCharacters, ' ');
+
+                rowText.Append(urlText);
+                rowText.Append(statusText);
+            }
+            catch (Exception)
+            {
+                rowText = new StringBuilder();
+                rowText.Append(new string(' ', Console.WindowWidth));
+            }
+            
+            Console.WriteLine(rowText.ToString());
+        }
     }
 }

@@ -17,7 +17,7 @@ public class SitemapScanner
     public string SitemapUrl { get; set; }
 
     public List<string> SitesToCheck { get; private set; }
-    public List<string> SitesChecked { get; private set; }
+    public List<(string url, HttpStatusCode status)> SitesChecked { get; private set; }
     
     public SitemapScanner(Logger? logger = null)
     {
@@ -171,6 +171,6 @@ public class SitemapScanner
             }
         }
         
-        SitesChecked.Add(siteUrl);
+        SitesChecked.Add((siteUrl, response.StatusCode));
     }
 }
