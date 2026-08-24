@@ -5,25 +5,38 @@ namespace SitemapScanner;
 
 public class SitemapScanner
 {
-    public delegate void FinishedHandler();
+    public delegate void EmptyHandler();
 
-    public event FinishedHandler? OnFinished;
+    public event EmptyHandler? OnFinished;
         
     private HttpClient HttpClient { get; init; }
     private ReportData Report { get; init; }
     
     public Logger Logger { get; init; }
+    
+    public string SitemapUrl { get; set; }
 
+    public List<string> SitesToCheck { get; private set; }
+    public List<string> SitesChecked { get; private set; }
+    
     public SitemapScanner(Logger? logger = null)
     {
         Logger = logger ?? new Logger();
+        SitemapUrl = "";
 
         HttpClient = new HttpClient();
         Report = new ReportData();
+        
+        SitesToCheck = [];
+        SitesChecked = [];
     }
 
     public async Task Scan(string sitemapUrl)
     {
+        SitemapUrl = sitemapUrl;
+        SitesToCheck = [];
+        SitesChecked = [];
+        
         using var response = await GetSitemap(sitemapUrl);
         var content = await response.Content.ReadAsStringAsync();
 
@@ -45,9 +58,13 @@ public class SitemapScanner
             Logger.WriteError($"{sitemapUrl} doesn't contain a valid sitemap!");
             return;
         }
+
+        foreach (var site in SitesToCheck)
+        {
+            await CheckSite(site);
+        }
         
-        Logger.WriteLog("Scan complete, creating report file");
-        Logger.GenerateReport(Report);
+        Logger.WriteLog("Scan complete");
 
         OnFinished?.Invoke();
     }
@@ -112,7 +129,7 @@ public class SitemapScanner
                         checkNextNode = false;
                         
                         var siteUrl = await reader.GetValueAsync();
-                        await CheckSite(siteUrl);
+                        SitesToCheck.Add(siteUrl);
                     }
 
                     break;
@@ -153,5 +170,7 @@ public class SitemapScanner
                 Logger.WriteError($"Site {siteUrl} is broken, got response code {response.StatusCode}");
             }
         }
+        
+        SitesChecked.Add(siteUrl);
     }
 }

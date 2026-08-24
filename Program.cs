@@ -14,7 +14,7 @@ class Program
             url = Console.ReadLine();
         
             isValidUrl = url?.EndsWith("sitemap.xml") ?? false;
-            if (!isValidUrl) logger.WriteError("Provided URL isn't valid!");
+            if (!isValidUrl) logger.WriteError("Provided URL isn't valid!", true);
         }
 
         if (url == null) return;
