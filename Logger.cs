@@ -2,6 +2,8 @@ namespace SitemapScanner;
 
 public class Logger
 {
+    public bool PrintToConsole { get; set; } = false;
+    
     private string logFilePath;
     
     private StreamWriter Log;
@@ -25,17 +27,20 @@ public class Logger
     {
         var timestamp = GetTimestamp();
         
-        Console.WriteLine(timestamp + content);
+        if (PrintToConsole) Console.WriteLine(content);
         Log.WriteLine(timestamp + content);
     }
 
     public void WriteError(string content)
     {
         var timestamp = GetTimestamp();
-        
-        Console.ForegroundColor = ConsoleColor.Red;
-        Console.WriteLine(timestamp + "[ERROR] " + content);
-        Console.ResetColor();
+
+        if (PrintToConsole)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine(content);
+            Console.ResetColor();
+        }
         
         Log.WriteLine(timestamp + "[ERROR] " + content);
         Error.WriteLine(timestamp + "[ERROR] " + content);

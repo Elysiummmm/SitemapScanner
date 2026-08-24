@@ -5,29 +5,31 @@ namespace SitemapScanner;
 
 public class SitemapScanner
 {
-    private HttpClient httpClient { get; init; }
-    private ReportData report { get; init; }
+    public delegate void FinishedHandler();
+
+    public event FinishedHandler? OnFinished;
+        
+    private HttpClient HttpClient { get; init; }
+    private ReportData Report { get; init; }
     
     public Logger Logger { get; init; }
-    public string SitemapUrl { get; init; }
 
-    public SitemapScanner(string sitemapUrl, Logger? logger = null)
+    public SitemapScanner(Logger? logger = null)
     {
         Logger = logger ?? new Logger();
-        SitemapUrl = sitemapUrl;
 
-        httpClient = new HttpClient();
-        report = new ReportData();
+        HttpClient = new HttpClient();
+        Report = new ReportData();
     }
 
-    public async Task Scan()
+    public async Task Scan(string sitemapUrl)
     {
-        using var response = await GetSitemap(SitemapUrl);
+        using var response = await GetSitemap(sitemapUrl);
         var content = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode) return;
 
-        report.SitemapsChecked.Add(SitemapUrl);
+        Report.SitemapsChecked.Add(sitemapUrl);
         if (content.Contains("sitemapindex"))
         {
             Logger.WriteLog("Found sitemap index");
@@ -40,19 +42,21 @@ public class SitemapScanner
         }
         else
         {
-            Logger.WriteError($"{SitemapUrl} doesn't contain a valid sitemap!");
+            Logger.WriteError($"{sitemapUrl} doesn't contain a valid sitemap!");
             return;
         }
         
         Logger.WriteLog("Scan complete, creating report file");
-        Logger.GenerateReport(report);
+        Logger.GenerateReport(Report);
+
+        OnFinished?.Invoke();
     }
 
     private async Task<HttpResponseMessage> GetSitemap(string url)
     {
         Logger.WriteLog($"Scanning {url}...");
         
-        HttpResponseMessage response = await httpClient.GetAsync(url);
+        HttpResponseMessage response = await HttpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode) Logger.WriteError($"Couldn't get sitemap {url}!");
 
         return response;
@@ -80,7 +84,7 @@ public class SitemapScanner
                         var sitemap = await GetSitemap(sitemapUrl);
                         if (!sitemap.IsSuccessStatusCode) continue;
                         
-                        report.SitemapsChecked.Add(sitemapUrl);
+                        Report.SitemapsChecked.Add(sitemapUrl);
                         await ScanSitemap(await sitemap.Content.ReadAsStreamAsync());
                     }
 
@@ -118,12 +122,12 @@ public class SitemapScanner
 
     public async Task CheckSite(string siteUrl)
     {
-        report.UrlsChecked++;
+        Report.UrlsChecked++;
         
         HttpResponseMessage response;
         try
         {
-            response = await httpClient.GetAsync(siteUrl);
+            response = await HttpClient.GetAsync(siteUrl);
         }
         catch (HttpRequestException e)
         {
@@ -145,7 +149,7 @@ public class SitemapScanner
             }
             else
             {
-                report.BrokenUrls.Add(siteUrl);
+                Report.BrokenUrls.Add(siteUrl);
                 Logger.WriteError($"Site {siteUrl} is broken, got response code {response.StatusCode}");
             }
         }

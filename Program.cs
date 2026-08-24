@@ -4,26 +4,25 @@ class Program
 {
     public static async Task Main(string[] args)
     {
-        Logger logger;
-        
-        if (args.Length < 2) logger = new Logger();
-        else logger = new Logger(args[0]);
-        
-        if (args.Length == 0)
+        Logger logger = new();
+        var isValidUrl = false;
+        var url = "";
+
+        while (!isValidUrl)
         {
-            logger.WriteError("No arguments provided!");
-            return;
+            Console.Write("Link to sitemap.xml file: ");
+            url = Console.ReadLine();
+        
+            isValidUrl = url?.EndsWith("sitemap.xml") ?? false;
+            if (!isValidUrl) logger.WriteError("Provided URL isn't valid!");
         }
 
-        var url = args[^1];
+        if (url == null) return;
         
-        if (!url.EndsWith("sitemap.xml"))
-        {
-            logger.WriteError("Provided URL isn't a sitemap.xml file!");
-            return;
-        }
+        SitemapScanner sitemapScanner = new(logger);
+        ScanRenderer scanRenderer = new(sitemapScanner);
         
-        SitemapScanner sitemapScanner = new(url, logger);
-        await sitemapScanner.Scan();
+        sitemapScanner.Scan(url);
+        await scanRenderer.Start();
     }
 }
