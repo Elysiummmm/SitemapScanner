@@ -4,21 +4,24 @@ public class Logger
 {
     private string logFilePath;
     
-    private StreamWriter Log;
-    private StreamWriter Error;
+    private StreamWriter? Log;
+    private StreamWriter? Error;
 
     private long startTime;
 
-    public Logger(string logFileLoc = ".")
+    public Logger(string logFileLoc = ".", bool createFile = true)
     {
         startTime = DateTime.Now.Ticks;
         
         var now = DateTime.Now;
         logFilePath = $"{logFileLoc}/{now.Day}-{now.Month}-{now.Year}_{now:HH-MM-ss}";
-
-        Log = File.CreateText(logFilePath + ".log");
-        Error = File.CreateText(logFilePath + ".error.log");
-        Log.AutoFlush = Error.AutoFlush = true;
+        
+        if (createFile)
+        {
+            Log = File.CreateText(logFilePath + ".log");
+            Error = File.CreateText(logFilePath + ".error.log");
+            Log.AutoFlush = Error.AutoFlush = true;
+        }
     }
 
     public void WriteLog(string content, bool printToConsole = false)
@@ -26,7 +29,7 @@ public class Logger
         var timestamp = GetTimestamp();
         
         if (printToConsole) Console.WriteLine(content);
-        Log.WriteLine(timestamp + content);
+        Log?.WriteLine(timestamp + content);
     }
 
     public void WriteError(string content, bool printToConsole = false)
@@ -40,8 +43,8 @@ public class Logger
             Console.ResetColor();
         }
         
-        Log.WriteLine(timestamp + "[ERROR] " + content);
-        Error.WriteLine(timestamp + "[ERROR] " + content);
+        Log?.WriteLine(timestamp + "[ERROR] " + content);
+        Error?.WriteLine(timestamp + "[ERROR] " + content);
     }
 
     public void GenerateReport(ReportData report)

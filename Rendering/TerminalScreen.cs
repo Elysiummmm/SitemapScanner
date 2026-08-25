@@ -29,6 +29,9 @@ public abstract class TerminalScreen
         if (width == -1) width = Console.WindowWidth;
         var paddingL = (width - text.Length) / 2;
         var paddingR = width - text.Length - paddingL;
+        
+        if (paddingR < 0) paddingR = 0;
+        if (paddingL < 0) paddingL = 0;
 
         return new string(' ', paddingL) + text + new string(' ', paddingR);
     }

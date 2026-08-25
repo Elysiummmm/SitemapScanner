@@ -38,9 +38,51 @@ public class SitemapScanner
         SitesToCheck = [];
         SitesChecked = [];
         
+        if (sitemapUrl.StartsWith("file:///")) await ScanLocal(sitemapUrl);
+        else await ScanRemote(sitemapUrl);
+
+        IsChecking = true;
+        foreach (var site in SitesToCheck)
+        {
+            await CheckSite(site);
+        }
+        
+        Logger.WriteLog("Scan complete");
+
+        OnFinished?.Invoke();
+    }
+
+    private async Task ScanLocal(string sitemapUrl)
+    {
+        Logger.WriteLog($"Scanning local sitemap {sitemapUrl}");
+        
+        sitemapUrl = sitemapUrl.Replace("file://", "");
+        var content = await File.ReadAllTextAsync(sitemapUrl);
+        Logger.WriteLog(content);
+        
+        if (content.Contains("sitemapindex"))
+        {
+            Logger.WriteLog("Found sitemap index");
+            await ScanSitemapIndex(File.OpenRead(sitemapUrl));
+        }
+        else if (content.Contains("urlset"))
+        {
+            Logger.WriteLog("Found sitemap");
+            await ScanSitemap(File.OpenRead(sitemapUrl));
+        }
+        else
+        {
+            Logger.WriteError($"{sitemapUrl} doesn't contain a valid sitemap!");
+        }
+    }
+
+    private async Task ScanRemote(string sitemapUrl)
+    {
+        Logger.WriteLog($"Scanning remote sitemap {sitemapUrl}");
+        
         using var response = await GetSitemap(sitemapUrl);
         var content = await response.Content.ReadAsStringAsync();
-
+        
         if (!response.IsSuccessStatusCode) return;
 
         Report.SitemapsChecked.Add(sitemapUrl);
@@ -57,25 +99,14 @@ public class SitemapScanner
         else
         {
             Logger.WriteError($"{sitemapUrl} doesn't contain a valid sitemap!");
-            return;
         }
-
-        IsChecking = true;
-        foreach (var site in SitesToCheck)
-        {
-            await CheckSite(site);
-        }
-        
-        Logger.WriteLog("Scan complete");
-
-        OnFinished?.Invoke();
     }
 
     private async Task<HttpResponseMessage> GetSitemap(string url)
     {
         Logger.WriteLog($"Scanning {url}...");
         
-        HttpResponseMessage response = await HttpClient.GetAsync(url);
+        var response = await HttpClient.GetAsync(url);
         if (!response.IsSuccessStatusCode) Logger.WriteError($"Couldn't get sitemap {url}!");
 
         return response;

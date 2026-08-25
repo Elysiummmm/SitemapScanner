@@ -6,10 +6,24 @@ class Program
 {
     public static async Task Main(string[] args)
     {
-        Logger logger = new();
+        Logger logger = new(createFile: args.Contains("--log"));
         var isValidUrl = false;
         var url = "";
 
+        if (args.Contains("--url"))
+        {
+            var idx = args.IndexOf("--url");
+            
+            if (idx == args.Length - 1)
+            {
+                logger.WriteError("No URL provided!", true);
+                return;
+            }
+            
+            isValidUrl = true;
+            url = args[idx + 1];
+        }
+        
         while (!isValidUrl)
         {
             Console.Write("Link to sitemap.xml file: ");
