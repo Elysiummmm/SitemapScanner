@@ -23,6 +23,7 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
     protected override void Render()
     {
         BrokenLinkList();
+        Footer();
         
         var key = Console.ReadKey(true);
         switch (key.Key)
@@ -47,7 +48,6 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
     {
         Console.Clear();
         Header();
-        Footer();
         StatusTable();
 
         BrokenLinkLines = Console.WindowHeight - Console.CursorTop - 2;
@@ -99,7 +99,6 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
             var countText = CenteredText(count.ToString(), Console.WindowWidth / 2);
             
             Console.Write(statusText + countText);
-            Console.CursorTop++;
         }
     }
 
@@ -111,12 +110,10 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         Console.SetCursorPosition(0, BrokenLinkStartLine);
         Console.Write(CenteredText("Broken Links"));
         
-        Console.SetCursorPosition(0, BrokenLinkStartLine + BrokenLinkLines - 1);
-        Console.Write(new string(' ', Console.WindowWidth));
-        
         Console.ResetColor();
+        Console.SetCursorPosition(0, BrokenLinkStartLine + 1);
         
-        var statusCharacters = 6;
+        var statusCharacters = 15;
         var urlCharacters = Console.WindowWidth - statusCharacters;
         
         for (var row = 0; row < BrokenLinkLines; row++)
@@ -125,13 +122,13 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
             
             try
             {
-                var rowData = Scanner.SitesChecked[row + BrokenLinkLineOffset];
+                var rowData = BrokenLinks[row + BrokenLinkLineOffset];
                 
                 var urlText = rowData.url.PadRight(urlCharacters, ' ');
                 if (urlText.Length > urlCharacters) urlText = "..." + urlText[3..(urlCharacters - 3)];
 
-                var statusText = $"{(int)rowData.status} ";
-                statusText += Enum.GetName(rowData.status) ?? "???";
+                var statusText = $"{(int)rowData.code} ";
+                statusText += Enum.GetName(rowData.code) ?? "???";
                 statusText = statusText.PadLeft(statusCharacters, ' ');
 
                 rowText.Append(urlText);
@@ -142,7 +139,15 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
                 rowText = new StringBuilder();
                 rowText.Append(new string(' ', Console.WindowWidth));
             }
+            
+            Console.Write(rowText.ToString());
+            Scanner.Logger.WriteLog(rowText.ToString());
         }
+        
+        Console.BackgroundColor = ConsoleColor.White;
+        Console.ForegroundColor = ConsoleColor.Black;
+        Console.SetCursorPosition(0, BrokenLinkStartLine + BrokenLinkLines - 1);
+        Console.Write(new string(' ', Console.WindowWidth));
 
         if (BrokenLinks.Count > 0) return;
         Console.SetCursorPosition(0, BrokenLinkStartLine + (BrokenLinkLines - 1) / 2);

@@ -58,7 +58,6 @@ public class SitemapScanner
         
         sitemapUrl = sitemapUrl.Replace("file://", "");
         var content = await File.ReadAllTextAsync(sitemapUrl);
-        Logger.WriteLog(content);
         
         if (content.Contains("sitemapindex"))
         {
@@ -179,7 +178,7 @@ public class SitemapScanner
         {
             response = await HttpClient.GetAsync(siteUrl);
         }
-        catch (HttpRequestException e)
+        catch (HttpRequestException)
         {
             // im assuming this is the only thing causing this error and i hope im right
             Logger.WriteError($"{siteUrl} couldn't be reached");
