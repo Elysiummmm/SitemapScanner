@@ -38,7 +38,7 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
                 break;
             case ConsoleKey.DownArrow:
             case ConsoleKey.PageDown:
-                if (BrokenLinkLineOffset < BrokenLinks.Count - 1) BrokenLinkLineOffset++;
+                if (BrokenLinkLineOffset < BrokenLinks.Count - BrokenLinkLines + 2) BrokenLinkLineOffset++;
                 break;
             case ConsoleKey.E:
                 var path = ExportPathInput();
@@ -80,6 +80,7 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
 
     private void Footer()
     {
+        ClearLine(Console.WindowHeight - 1);
         Console.ResetColor();
         Console.SetCursorPosition(0, Console.WindowHeight - 1);
         
@@ -122,6 +123,12 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         
         Console.SetCursorPosition(0, BrokenLinkStartLine);
         Console.Write(CenteredText("Broken Links"));
+
+        if (BrokenLinkLineOffset > 0)
+        {
+            Console.SetCursorPosition(Console.WindowWidth - 5, BrokenLinkStartLine);
+            Console.Write("[...]");
+        }
         
         Console.ResetColor();
         Console.SetCursorPosition(0, BrokenLinkStartLine + 1);
@@ -171,6 +178,12 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         Console.ForegroundColor = ConsoleColor.Black;
         Console.SetCursorPosition(0, BrokenLinkStartLine + BrokenLinkLines - 1);
         Console.Write(new string(' ', Console.WindowWidth));
+        
+        if (BrokenLinkLineOffset < BrokenLinks.Count - BrokenLinkLines + 2)
+        {
+            Console.SetCursorPosition(Console.WindowWidth - 5, BrokenLinkStartLine + BrokenLinkLines - 1);
+            Console.Write("[...]");
+        }
 
         if (BrokenLinks.Count > 0) return;
         Console.ResetColor();
