@@ -1,16 +1,13 @@
 # SitemapScanner
 
-A small utility program written in C# to scan sitemaps and report on broken links.
+A small utility program written in C# to scan sitemaps and report on broken links. 
+It runs a GET request on every URL listed in the sitemap.
+Sitemap indexes also work and redirects get logged and verified as well.
 
 ## Usage
-### `SitemapScanner <url>`
-`url` must be a direct link to a `sitemap.xml` file.
+Just run the executable. There are some optional command line arguments listed below.
 
-Runs a GET request on every URL listed in the sitemap. Sitemap indexes also work and redirects get logged and verified as well.
-After finishing execution you will find three log files in the executable directory (`*.log`, `*.error.log`, `*.report.log`).
-`*.log` contains all logs from execution, `*.error.log` contains all errors encountered during execution, and `*.report.log`
-contains a summary and simplified list of all broken links.
-
-### `SitemapScanner <logFolder> <url>`
-
-Same as above, but write the log files into a custom folder.
+| Argument  | Description                                        | Example                                                |
+|-----------|----------------------------------------------------|--------------------------------------------------------|
+| `--url`   | Skip the URL prompt to provide a URL directly.     | `SitemapScanner --url https://example.com/sitemap.xml` |
+| `--log`   | If provided, writes logs to the executable folder. | `SitemapScanner --log`                                 |
