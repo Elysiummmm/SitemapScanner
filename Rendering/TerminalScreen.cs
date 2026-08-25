@@ -35,6 +35,13 @@ public abstract class TerminalScreen
 
         return new string(' ', paddingL) + text + new string(' ', paddingR);
     }
+
+    protected static void ClearLine(int y)
+    {
+        Console.SetCursorPosition(0, y);
+        Console.ResetColor();
+        Console.Write(new string(' ', Console.WindowWidth));
+    }
     
     protected virtual async Task OnFinished() { }
     protected virtual async Task BeforeStart() { }

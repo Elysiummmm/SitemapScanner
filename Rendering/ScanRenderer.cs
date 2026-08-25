@@ -58,7 +58,7 @@ public class ScanRenderer : TerminalScreen
         Console.ResetColor();
         Console.ForegroundColor = ConsoleColor.White;
         
-        var statusCharacters = 6;
+        var statusCharacters = 15;
         var urlCharacters = Console.WindowWidth - statusCharacters;
         var tableRows = Console.WindowHeight - 1;
 

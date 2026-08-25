@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 
@@ -11,7 +12,7 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         "[Q] - quit",
         "[\u2191] / [PgUp] - scroll up",
         "[\u2193] / [PgDown] - scroll down",
-        "[E] - export data"
+        "[E] - export broken links"
     ]; 
     
     private SitemapScanner Scanner { get; init; } = sitemapScanner;
@@ -40,6 +41,13 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
                 if (BrokenLinkLineOffset < BrokenLinks.Count - 1) BrokenLinkLineOffset++;
                 break;
             case ConsoleKey.E:
+                var path = ExportPathInput();
+                ExportCsv(path);
+                
+                // full re-render because of the readline
+                Console.Clear();
+                Header();
+                StatusTable();
                 break;
         }
     }
@@ -94,11 +102,16 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         foreach (var statusCode in statusCodes)
         {
             var count = Scanner.SitesChecked.FindAll(s => s.status == statusCode).Count;
-                
-            var statusText = CenteredText($"Status {(int)statusCode} {Enum.GetName(statusCode) ?? "???"}", Console.WindowWidth / 2);
+
+            string rowLabel;
+
+            if (statusCode == HttpStatusCode.Continue) rowLabel = "Unreachable";
+            else rowLabel = $"Status {(int)statusCode} {Enum.GetName(statusCode) ?? "???"}";
+            
+            var statusText = CenteredText(rowLabel, Console.WindowWidth / 2);
             var countText = CenteredText(count.ToString(), Console.WindowWidth / 2);
             
-            Console.Write(statusText + countText);
+            Console.Write((statusText + countText).PadLeft(Console.WindowWidth, ' '));
         }
     }
 
@@ -127,8 +140,18 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
                 var urlText = rowData.url.PadRight(urlCharacters, ' ');
                 if (urlText.Length > urlCharacters) urlText = "..." + urlText[3..(urlCharacters - 3)];
 
-                var statusText = $"{(int)rowData.code} ";
-                statusText += Enum.GetName(rowData.code) ?? "???";
+                string statusText;
+
+                if (rowData.code == HttpStatusCode.Continue)
+                {
+                    statusText = "Unreachable";
+                }
+                else
+                {
+                    statusText = $"{(int)rowData.code} ";
+                    statusText += Enum.GetName(rowData.code) ?? "???";
+                }
+                
                 statusText = statusText.PadLeft(statusCharacters, ' ');
 
                 rowText.Append(urlText);
@@ -150,7 +173,49 @@ public class SummaryTable(SitemapScanner sitemapScanner) : TerminalScreen
         Console.Write(new string(' ', Console.WindowWidth));
 
         if (BrokenLinks.Count > 0) return;
+        Console.ResetColor();
         Console.SetCursorPosition(0, BrokenLinkStartLine + (BrokenLinkLines - 1) / 2);
         Console.Write(CenteredText("No broken links found!"));
+    }
+
+    private string ExportPathInput()
+    {
+        Console.CursorVisible = true;
+        
+        ClearLine(Console.WindowHeight - 1);
+        
+        Console.SetCursorPosition(0, Console.WindowHeight - 1);
+        Console.Write("Export location (CSV file, leave blank to cancel): ");
+        
+        var path = Console.ReadLine() ?? "";
+        
+        Console.CursorVisible = false;
+        return path;
+    }
+
+    private void ExportCsv(string path)
+    {
+        if (path == string.Empty) return;
+
+        try
+        {
+            using var output = File.CreateText(path);
+            output.WriteLine("url,status");
+
+            foreach (var site in BrokenLinks)
+            {
+                if (site.code == HttpStatusCode.Continue) output.WriteLine($"{site.url},0");
+                else output.WriteLine($"{site.url},{(int)site.code}");
+            }
+
+            output.Flush();
+        }
+        catch (Exception)
+        {
+            Console.SetCursorPosition(0, Console.WindowHeight - 1);
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Write("Export failed, press any key");
+            Console.ReadKey(true);
+        }
     }
 }

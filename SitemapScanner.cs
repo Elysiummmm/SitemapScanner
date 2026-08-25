@@ -182,6 +182,7 @@ public class SitemapScanner
         {
             // im assuming this is the only thing causing this error and i hope im right
             Logger.WriteError($"{siteUrl} couldn't be reached");
+            SitesChecked.Add((siteUrl, HttpStatusCode.Continue)); // i dont see why this would ever receive a 100 so its prob fine
             return;
         }
                         
